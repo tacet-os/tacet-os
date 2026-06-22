@@ -171,9 +171,15 @@ impl<BackendData: Backend> AnvilState<BackendData> {
             }
 
             KeyAction::Run(cmd) => {
-                info!(cmd, "Starting program");
+                let Some((prog, args)) = cmd.split_first() else {
+                    error!("KeyAction::Run with empty argv");
+                    return;
+                };
+                let cmd_str = cmd.join(" ");
+                info!(cmd = %cmd_str, "Starting program");
 
-                if let Err(e) = Command::new(&cmd)
+                if let Err(e) = Command::new(prog)
+                    .args(args)
                     .envs(
                         self.socket_name
                             .clone()
@@ -188,7 +194,7 @@ impl<BackendData: Backend> AnvilState<BackendData> {
                     )
                     .spawn()
                 {
-                    error!(cmd, err = %e, "Failed to start program");
+                    error!(cmd = %cmd_str, err = %e, "Failed to start program");
                 }
             }
 
@@ -1631,8 +1637,9 @@ enum KeyAction {
     Quit,
     /// Trigger a vt-switch
     VtSwitch(i32),
-    /// run a command
-    Run(String),
+    /// Run a command. First element is the program; rest are argv.
+    /// (No shell parsing — values flow straight into `Command::args`.)
+    Run(Vec<String>),
     /// Switch the current screen
     Screen(usize),
     ScaleUp,
@@ -1696,7 +1703,19 @@ fn process_keyboard_shortcut(modifiers: ModifiersState, keysym: Keysym) -> Optio
                     .unwrap_or("foot")
                     .to_string()
             });
-        Some(KeyAction::Run(cmd))
+        // TACET_TERMINAL may contain args (e.g. "foot --hold"). Split
+        // on whitespace so they flow into Command::args rather than
+        // being mistaken for the program name.
+        Some(KeyAction::Run(
+            cmd.split_whitespace().map(str::to_owned).collect(),
+        ))
+    } else if modifiers.logo && keysym == Keysym::b {
+        // Super+B → open tacet-browser on a self-identifying debug
+        // page. Override the target by setting $TACET_BROWSER_DEBUG_URL
+        // (handy when iterating on a local generative UI).
+        let url = std::env::var("TACET_BROWSER_DEBUG_URL")
+            .unwrap_or_else(|_| "data:text/html,<h1>tacet-browser</h1>".to_string());
+        Some(KeyAction::Run(vec!["tacet-browser".into(), url]))
     } else if modifiers.logo && (xkb::KEY_1..=xkb::KEY_9).contains(&keysym.raw()) {
         Some(KeyAction::Screen((keysym.raw() - xkb::KEY_1) as usize))
     } else if modifiers.logo && modifiers.shift && keysym == Keysym::M {

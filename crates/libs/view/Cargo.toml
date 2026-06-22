@@ -1,0 +1,19 @@
+[package]
+name = "tacet-view"
+description = "Contextless Chromium-backed web view with CDP, for tacet-os apps"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+publish = false
+
+# The primitive every web-backed tacet app shares: one ephemeral
+# Chromium process pointed at a URL, with CDP exposed for agents.
+# Used by tacet-browser today; future tacet-terminal / agent canvas
+# will compose on top of the same View::spawn surface.
+
+[dependencies]
+anyhow = "1"
+tempfile = "3"

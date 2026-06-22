@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+type: 'application'
+language: 'rust'
+
+tasks:
+  build:
+    command: 'cargo build -p tacet-browser'
+    inputs:
+      - 'src/**/*'
+      - 'Cargo.toml'
+      - '/crates/libs/view/**/*'
+      - '/Cargo.toml'
+      - '/Cargo.lock'
+
+  build-release:
+    command: 'cargo build -p tacet-browser --release'
+    inputs:
+      - 'src/**/*'
+      - 'Cargo.toml'
+      - '/crates/libs/view/**/*'
+      - '/Cargo.toml'
+      - '/Cargo.lock'
+
+  # Quick smoke: open a data: URL and print its CDP endpoint, then
+  # the user closes the window. Requires `chromium` on PATH.
+  dev:
+    command: 'cargo run -p tacet-browser -- data:text/html,<h1>tacet-browser</h1>'
+    options:
+      persistent: true
+
+  test:
+    command: 'cargo test -p tacet-browser -p tacet-view'
+
+  lint:
+    command: 'cargo clippy -p tacet-browser -p tacet-view -- -D warnings'
+
+  fmt:
+    command: 'cargo fmt -p tacet-browser -p tacet-view'
+
+  package-nix:
+    command: 'nix build .#tacet-browser'

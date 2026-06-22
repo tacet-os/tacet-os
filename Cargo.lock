@@ -1311,26 +1311,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "object-os-shell"
-version = "0.0.1"
-dependencies = [
- "bitflags 2.12.1",
- "fps_ticker",
- "image",
- "profiling",
- "rand 0.8.6",
- "renderdoc",
- "smithay",
- "smithay-drm-extras",
- "thiserror 1.0.69",
- "tracing",
- "tracing-subscriber",
- "x11rb",
- "xcursor",
- "xkbcommon 0.8.0",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1951,6 +1931,42 @@ dependencies = [
  "pkg-config",
  "toml",
  "version-compare",
+]
+
+[[package]]
+name = "tacet-browser"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "tacet-view",
+]
+
+[[package]]
+name = "tacet-compositor"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "bitflags 2.12.1",
+ "fps_ticker",
+ "image",
+ "profiling",
+ "rand 0.8.6",
+ "renderdoc",
+ "smithay",
+ "smithay-drm-extras",
+ "thiserror 1.0.69",
+ "tracing",
+ "tracing-subscriber",
+ "x11rb",
+ "xcursor",
+ "xkbcommon 0.8.0",
+]
+
+[[package]]
+name = "tacet-view"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "tempfile",
 ]
 
 [[package]]

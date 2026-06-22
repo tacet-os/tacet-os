@@ -1,0 +1,18 @@
+[package]
+name = "tacet-browser"
+description = "Minimal contextless Chromium wrapper with CDP for tacet-os"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+publish = false
+
+# Thin CLI shell around tacet-view. See ../../libs/view for the
+# rationale on wrapping system Chromium instead of embedding a web
+# engine.
+
+[dependencies]
+anyhow = "1"
+tacet-view = { path = "../../libs/view" }

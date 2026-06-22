@@ -91,6 +91,80 @@
             passthru.providedSessions = [ "tacet" ];
           };
 
+          # tacet-terminal — minimal Wayland terminal. alacritty_terminal
+          # handles PTY + VT state machine; the binary opens a Wayland
+          # surface via smithay-client-toolkit and renders the cell grid.
+          # No tabs/splits/config-file/scrollback-search for alpha.1.
+          tacet-terminal = pkgs.rustPlatform.buildRustPackage {
+            pname = "tacet-terminal";
+            version = "0.1.0-alpha.1";
+            src = ./.;
+            cargoLock = {
+              lockFile = ./Cargo.lock;
+              outputHashes = {
+                "smithay-0.7.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
+                "smithay-drm-extras-0.1.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
+              };
+            };
+            buildAndTestSubdir = "crates/apps/terminal";
+            nativeBuildInputs = [ pkgs.pkg-config ];
+            buildInputs = with pkgs; [
+              wayland libxkbcommon fontconfig
+            ];
+            postInstall = ''
+              mkdir -p $out/share/applications
+              cat > $out/share/applications/tacet-terminal.desktop <<EOF
+              [Desktop Entry]
+              Name=tacet-terminal
+              Comment=Terminal for tacet-os
+              Exec=$out/bin/tacet-terminal
+              Type=Application
+              Categories=System;TerminalEmulator;
+              EOF
+            '';
+            meta = with pkgs.lib; {
+              description = "Wayland terminal for tacet-os";
+              license = licenses.mit;
+              mainProgram = "tacet-terminal";
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+            };
+          };
+
+          # tacet-browser — thin Rust wrapper around system Chromium that
+          # exposes CDP and a contextless profile. Used both for rendering
+          # tacet-os' own generative UIs (file://) and for agentic web
+          # browsing. The web engine is NOT embedded — see
+          # crates/libs/view/src/lib.rs for the rationale.
+          tacet-browser = pkgs.rustPlatform.buildRustPackage {
+            pname = "tacet-browser";
+            version = "0.1.0-alpha.1";
+            src = ./.;
+            cargoLock = {
+              lockFile = ./Cargo.lock;
+              outputHashes = {
+                "smithay-0.7.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
+                "smithay-drm-extras-0.1.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
+              };
+            };
+            buildAndTestSubdir = "crates/apps/browser";
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            # Chromium is a runtime dependency only — the build itself
+            # is pure Rust. makeWrapper puts it on PATH so the binary
+            # works regardless of the consumer's environment.
+            postInstall = ''
+              wrapProgram $out/bin/tacet-browser \
+                --prefix PATH : ${pkgs.chromium}/bin \
+                --set-default TACET_BROWSER_BIN chromium
+            '';
+            meta = with pkgs.lib; {
+              description = "Minimal contextless Chromium wrapper with CDP for tacet-os";
+              homepage = "https://github.com/tacet-os/tacet-os";
+              license = licenses.mit;
+              mainProgram = "tacet-browser";
+              platforms = [ "x86_64-linux" "aarch64-linux" ];
+            };
+          };
+
           default = self.packages.${system}.tacet-compositor;
         });
 
@@ -156,6 +230,7 @@
       # `nix flake check` runs these. Wires the package build into CI.
       checks = forAllSystems (system: {
         compositor = self.packages.${system}.tacet-compositor;
+        browser = self.packages.${system}.tacet-browser;
       });
 
       formatter = forAllSystems (system: pkgsFor.${system}.nixpkgs-fmt);
