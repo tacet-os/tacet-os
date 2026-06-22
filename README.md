@@ -38,13 +38,24 @@ After `sudo nixos-rebuild switch`, "tacet" appears as a selectable session in yo
 
 ## Develop
 
+The flake's `devShells.default` provides every language toolchain and
+system tool needed for this repo — entering it gives you `rustc`, `cargo`,
+`rust-analyzer`, `rustfmt`, `clippy`, `bun`, `node`, `npm`, `git`,
+`nixpkgs-fmt`, `nil`, plus all Wayland client libs (`libwayland`,
+`libxkbcommon`, `libgbm`, etc.) on `LD_LIBRARY_PATH`.
+
 ```bash
-nix develop                          # rust + node + nix tooling
-moon run compositor:build            # build tacet-compositor
-moon run launcher:dev                # vite dev server for the launcher
-nix build .#tacet-compositor         # build the nix package
+nix develop                          # enter dev shell (one-time per terminal)
+bun install                          # fetch JS deps incl. moonrepo (one-time per checkout)
+bun run moon compositor:build        # build tacet-compositor
+bun run moon launcher:dev            # vite dev server for the launcher
+nix build .#tacet-compositor         # build the nix package (what NixOS consumes)
 nix flake check                      # validate flake + run checks
 ```
+
+`moonrepo` ships via `package.json` devDependencies rather than as a nix
+package because current nixpkgs' `moon` derivation has a broken transitive
+cargo dep. Using `bun install` to fetch it keeps the dev loop working.
 
 ## License
 

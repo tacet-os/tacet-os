@@ -7,9 +7,11 @@
   "workspaces": ["packages/*"],
   "packageManager": "bun@1.1.0",
   "scripts": {
+    "moon": "moon",
     "typecheck": "bunx tsc --noEmit"
   },
   "devDependencies": {
+    "@moonrepo/cli": "^1.41.0",
     "typescript": "^5.7.0"
   }
 }

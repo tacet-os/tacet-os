@@ -124,17 +124,32 @@
           default = pkgs.mkShell {
             nativeBuildInputs = deps.native;
             buildInputs = deps.runtime ++ (with pkgs; [
-              # rust
+              # rust toolchain
               rustc cargo rust-analyzer rustfmt clippy
-              # ts / js (launcher)
+              # ts / js: bun manages the packages/* workspace; node is here
+              # because vite + many JS tools shell out to node directly.
+              # npm comes bundled with nodejs.
               bun nodejs_22
-              # nix
-              nixpkgs-fmt nix-output-monitor
-              # polyglot task runner
-              moon
+              # nix tooling — formatter + LSP + pretty build output
+              nixpkgs-fmt nil nix-output-monitor
+              # vcs — included so the shell is fully self-contained;
+              # don't depend on the host's git version
+              git
             ]);
             # Required for `cargo run --features udev`: dlopen at runtime.
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath deps.runtime;
+
+            # moonrepo (polyglot task runner) is intentionally NOT a nix
+            # package here — current nixpkgs `moon` has a broken transitive
+            # rust dep (`sdd` lib won't compile). It lives in the root
+            # package.json's devDependencies instead. After `nix develop`,
+            # run `bun install` once; then `bun run moon ...` orchestrates
+            # tasks across crates/* and packages/*.
+            shellHook = ''
+              if [ ! -d node_modules ]; then
+                echo "tacet-os dev shell: run \`bun install\` to fetch JS deps (incl. moon)"
+              fi
+            '';
           };
         });
 
