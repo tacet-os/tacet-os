@@ -30,6 +30,19 @@ pub const ENV_CHROMIUM_BIN: &str = "TACET_BROWSER_BIN";
 
 const DEFAULT_CHROMIUM_BIN: &str = "chromium";
 
+/// Whether Chromium should paint normal browser chrome (omnibox, tabs,
+/// bookmarks bar) or be a frameless single-page surface.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ChromeMode {
+    /// `--app=URL` — frameless, no chrome. For embedded UIs like
+    /// `tacet-terminal` or future agent canvases where the page IS the
+    /// app surface.
+    App,
+    /// Positional URL — full Chromium chrome including the address bar.
+    /// For `tacet-browser`, where the user expects to navigate.
+    Browser,
+}
+
 /// Options for launching a [`View`].
 pub struct ViewOptions {
     /// Already-resolved URL (use [`resolve_target`] for path-or-URL input).
@@ -42,6 +55,9 @@ pub struct ViewOptions {
     pub chromium_bin: Option<OsString>,
     /// Additional Chromium flags appended after the built-in set.
     pub extra_args: Vec<OsString>,
+    /// Chrome-paint behavior. Default is [`ChromeMode::App`] for
+    /// back-compat with the original embedded-UI callsites.
+    pub chrome: ChromeMode,
 }
 
 impl ViewOptions {
@@ -51,7 +67,13 @@ impl ViewOptions {
             cdp_port: 0,
             chromium_bin: None,
             extra_args: Vec::new(),
+            chrome: ChromeMode::App,
         }
+    }
+
+    pub fn with_chrome(mut self, chrome: ChromeMode) -> Self {
+        self.chrome = chrome;
+        self
     }
 }
 
@@ -75,7 +97,16 @@ impl View {
             .unwrap_or_else(|| OsString::from(DEFAULT_CHROMIUM_BIN));
 
         let mut cmd = Command::new(&bin);
-        cmd.arg(format!("--app={}", opts.url));
+        match opts.chrome {
+            ChromeMode::App => {
+                cmd.arg(format!("--app={}", opts.url));
+            }
+            ChromeMode::Browser => {
+                // Positional URL → normal Chromium window with omnibox.
+                // Must come AFTER all `--` flags or Chromium misparses it
+                // as a flag value; we add it last via `.arg(url)` below.
+            }
+        }
         cmd.arg(format!(
             "--user-data-dir={}",
             profile.path().display()
@@ -91,6 +122,9 @@ impl View {
             "--ozone-platform=wayland",
         ]);
         cmd.args(opts.extra_args);
+        if opts.chrome == ChromeMode::Browser {
+            cmd.arg(&opts.url);
+        }
 
         let child = cmd
             .spawn()

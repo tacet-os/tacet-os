@@ -13,7 +13,7 @@
 use std::{env, ffi::OsString, process, time::Duration};
 
 use anyhow::{anyhow, bail, Context, Result};
-use tacet_view::{resolve_target, View, ViewOptions};
+use tacet_view::{resolve_target, ChromeMode, View, ViewOptions};
 
 const CDP_READY_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -35,6 +35,9 @@ fn main() -> Result<()> {
         cdp_port: parsed.cdp_port,
         chromium_bin: None,
         extra_args: parsed.passthrough,
+        // Full browser chrome — users navigate via the omnibox; this is
+        // what distinguishes tacet-browser from a tacet-view embed.
+        chrome: ChromeMode::Browser,
     })?;
 
     // stdout is reserved for the CDP endpoint so consumers can
