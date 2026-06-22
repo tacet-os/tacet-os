@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/tasks.json
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+# Project-specific tasks live in each project's moon.yml.
+# This file is reserved for cross-project / workspace-global tasks.
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+  tests:
+    - 'tests/**/*'

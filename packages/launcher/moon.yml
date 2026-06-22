@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+type: 'application'
+language: 'typescript'
+
+tasks:
+  dev:
+    command: 'vite'
+    options:
+      persistent: true
+
+  build:
+    command: 'vite build'
+    inputs:
+      - 'src/**/*'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'package.json'
+
+  preview:
+    command: 'vite preview'
+    options:
+      persistent: true
+
+  typecheck:
+    command: 'tsc --noEmit'

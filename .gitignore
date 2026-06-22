@@ -1,0 +1,35 @@
+# Rust
+target/
+**/*.rs.bk
+
+# Node / Bun
+node_modules/
+dist/
+build/
+.vite/
+
+# Nix
+result
+result-*
+.direnv/
+
+# Moonrepo
+.moon/cache/
+.moon/docker/
+
+# Editor scratch
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS / env
+.DS_Store
+.env
+.env.local
+
+# Logs
+*.log
+
+# Dev VM artifacts (when added)
+.vm-logs/

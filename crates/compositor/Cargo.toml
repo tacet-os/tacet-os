@@ -1,0 +1,62 @@
+[package]
+name = "tacet-compositor"
+description = "Wayland compositor for tacet-os (smithay-based)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+publish = false
+
+# Seeded from smithay's anvil reference compositor (MIT, github.com/Smithay/smithay)
+# at the same git rev pinned in workspace Cargo.lock. Gradually replaced by
+# tacet-os' own canvas + per-window log/chat sidebar logic.
+
+[dependencies]
+bitflags = "2"
+rand = "0.8"
+thiserror = "1"
+tracing = { version = "0.1", features = ["max_level_trace", "release_max_level_debug"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+xkbcommon = "0.8"
+profiling = "1"
+
+# anvil-optional deps that are part of the default feature set
+fps_ticker = { version = "1", optional = true }
+image = { version = "0.25", default-features = false, features = ["png"], optional = true }
+xcursor = { version = "0.3", optional = true }
+renderdoc = { version = "0.11", optional = true }
+x11rb = { version = "0.13", default-features = false, features = ["composite"], optional = true }
+
+[dependencies.smithay]
+git = "https://github.com/Smithay/smithay"
+default-features = false
+features = ["desktop", "wayland_frontend"]
+
+[dependencies.smithay-drm-extras]
+git = "https://github.com/Smithay/smithay"
+optional = true
+
+[features]
+default = ["egl", "winit", "udev", "xwayland"]
+debug = ["fps_ticker", "image", "renderdoc"]
+egl = ["smithay/use_system_lib", "smithay/backend_egl"]
+udev = [
+    "smithay-drm-extras",
+    "smithay/backend_libinput",
+    "smithay/backend_udev",
+    "smithay/backend_drm",
+    "smithay/backend_gbm",
+    "smithay/backend_vulkan",
+    "smithay/backend_egl",
+    "smithay/backend_session_libseat",
+    "image",
+    "smithay/renderer_gl",
+    "smithay/renderer_pixman",
+    "smithay/renderer_multi",
+    "xcursor",
+]
+winit = ["smithay/backend_winit", "smithay/backend_drm"]
+x11 = ["smithay/backend_x11", "x11rb", "smithay/renderer_gl", "smithay/backend_vulkan"]
+xwayland = ["smithay/xwayland", "x11rb", "smithay/x11rb_event_source", "xcursor"]

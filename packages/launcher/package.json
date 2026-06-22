@@ -1,0 +1,17 @@
+{
+  "name": "@tacet-os/launcher",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "tacet-launcher — app launcher surface for tacet-os (alpha.1 stub)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}

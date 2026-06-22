@@ -1,0 +1,15 @@
+{
+  "name": "tacet-os",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "tacet-os monorepo root — TS workspace for launcher and future UI surfaces",
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "packageManager": "bun@1.1.0",
+  "scripts": {
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

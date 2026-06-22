@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/toolchain.json
+$schema: 'https://moonrepo.dev/schemas/toolchain.json'
+
+# Toolchain versions are managed by `nix develop` — moon defers to whatever
+# the active shell provides. This file exists so moon recognizes which
+# language toolchains are in scope for project autodetection.
+
+rust:
+  syncToolchainConfig: false
+
+node:
+  packageManager: 'bun'

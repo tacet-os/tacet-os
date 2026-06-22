@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+type: 'application'
+language: 'rust'
+
+tasks:
+  build:
+    command: 'cargo build -p tacet-compositor --no-default-features --features egl,udev,xwayland'
+    inputs:
+      - 'src/**/*'
+      - 'Cargo.toml'
+      - '/Cargo.toml'
+      - '/Cargo.lock'
+
+  build-release:
+    command: 'cargo build -p tacet-compositor --release --no-default-features --features egl,udev,xwayland'
+    inputs:
+      - 'src/**/*'
+      - 'Cargo.toml'
+      - '/Cargo.toml'
+      - '/Cargo.lock'
+
+  # Nested winit window — for desktop dev without leaving the current
+  # session. `moon run compositor:dev` then a wayland-app to test.
+  dev:
+    command: 'cargo run -p tacet-compositor --no-default-features --features egl,winit -- --winit'
+    options:
+      persistent: true
+
+  test:
+    command: 'cargo test -p tacet-compositor'
+
+  lint:
+    command: 'cargo clippy -p tacet-compositor -- -D warnings'
+
+  fmt:
+    command: 'cargo fmt -p tacet-compositor'
+
+  # Nix-side build (what NixOS consumes). Heavier — full sandbox.
+  package-nix:
+    command: 'nix build .#tacet-compositor'

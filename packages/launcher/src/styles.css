@@ -1,0 +1,38 @@
+:root {
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  background: #0c0c0d;
+  color: #e7e7e8;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.launcher {
+  max-width: 32rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.launcher header h1 {
+  margin: 0 0 0.25rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.launcher header .status {
+  margin: 0 0 1.5rem;
+  color: #8a8a8d;
+  font-size: 0.875rem;
+}
+
+.launcher code {
+  background: #1a1a1c;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
