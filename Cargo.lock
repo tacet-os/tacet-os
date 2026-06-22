@@ -1962,6 +1962,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tacet-terminal"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "tacet-view",
+]
+
+[[package]]
 name = "tacet-view"
 version = "0.1.0-alpha.1"
 dependencies = [

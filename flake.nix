@@ -91,18 +91,13 @@
             passthru.providedSessions = [ "tacet" ];
           };
 
-          # tacet-terminal — minimal Wayland terminal. alacritty_terminal
-          # handles PTY + VT state machine; the binary opens a Wayland
-          # surface via smithay-client-toolkit and renders the cell grid.
-          # No tabs/splits/config-file/scrollback-search for alpha.1.
-          #
-          # TODO(terminal): crate body lives in a separate branch — the
-          # buildAndTestSubdir (`crates/apps/terminal`) does not exist on
-          # `dev` yet, so the package, the session-module systemPackages
-          # entry, and the xdg-terminals.list bit are commented out
-          # until the crate lands. Restore by uncommenting both this
-          # block and the matching section in nix/modules/tacet-session.nix.
-          /*
+          # tacet-terminal — alpha.1 placeholder built on tacet-view.
+          # Opens a contextless Chromium window pointed at an inline
+          # HTML page; later iterations swap the inline data: URL for
+          # a packaged bundle hosting libghostty-wasm + PTY bridge.
+          # Same shape as tacet-browser: pure rust build (no Wayland
+          # client libs needed because tacet-view shells out to system
+          # chromium), wrapped at install time so chromium is on PATH.
           tacet-terminal = pkgs.rustPlatform.buildRustPackage {
             pname = "tacet-terminal";
             version = "0.1.0-alpha.1";
@@ -115,11 +110,12 @@
               };
             };
             buildAndTestSubdir = "crates/apps/terminal";
-            nativeBuildInputs = [ pkgs.pkg-config ];
-            buildInputs = with pkgs; [
-              wayland libxkbcommon fontconfig
-            ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
             postInstall = ''
+              wrapProgram $out/bin/tacet-terminal \
+                --prefix PATH : ${pkgs.chromium}/bin \
+                --set-default TACET_BROWSER_BIN chromium
+
               mkdir -p $out/share/applications
               cat > $out/share/applications/tacet-terminal.desktop <<EOF
               [Desktop Entry]
@@ -131,13 +127,12 @@
               EOF
             '';
             meta = with pkgs.lib; {
-              description = "Wayland terminal for tacet-os";
+              description = "Terminal for tacet-os (alpha.1: tacet-view placeholder)";
               license = licenses.mit;
               mainProgram = "tacet-terminal";
               platforms = [ "x86_64-linux" "aarch64-linux" ];
             };
           };
-          */
 
           # tacet-browser — thin Rust wrapper around system Chromium that
           # exposes CDP and a contextless profile. Used both for rendering
@@ -240,6 +235,7 @@
       checks = forAllSystems (system: {
         compositor = self.packages.${system}.tacet-compositor;
         browser = self.packages.${system}.tacet-browser;
+        terminal = self.packages.${system}.tacet-terminal;
       });
 
       formatter = forAllSystems (system: pkgsFor.${system}.nixpkgs-fmt);

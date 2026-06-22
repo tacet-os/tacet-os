@@ -1,0 +1,19 @@
+[package]
+name = "tacet-terminal"
+description = "Terminal for tacet-os (alpha.1 placeholder built on tacet-view)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+publish = false
+
+# Alpha.1 placeholder. Opens a tacet-view (Chromium via --app=) pointed
+# at an inline HTML page. Real terminal will swap the inline data: URL
+# for a bundled packages/apps/terminal HTML entry that hosts
+# libghostty-wasm and connects to a rust-side PTY bridge.
+
+[dependencies]
+anyhow = "1"
+tacet-view = { path = "../../libs/view" }

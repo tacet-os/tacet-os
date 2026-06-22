@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+type: 'application'
+language: 'rust'
+
+tasks:
+  build:
+    command: 'cargo build -p tacet-terminal'
+    inputs:
+      - 'src/**/*'
+      - 'Cargo.toml'
+      - '/Cargo.toml'
+      - '/Cargo.lock'
+
+  build-release:
+    command: 'cargo build -p tacet-terminal --release'
+
+  dev:
+    command: 'cargo run -p tacet-terminal'
+    options:
+      persistent: true
+
+  test:
+    command: 'cargo test -p tacet-terminal'
+
+  lint:
+    command: 'cargo clippy -p tacet-terminal -- -D warnings'
+
+  package-nix:
+    command: 'nix build .#tacet-terminal'

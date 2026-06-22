@@ -10,25 +10,28 @@ self: { config, pkgs, lib, ... }:
     self.packages.${pkgs.system}.tacet-compositor
   ];
 
-  # tacet-browser ships as the default contextless web surface. We
-  # intentionally don't set BROWSER, since a persistent-profile
-  # browser is a reasonable default for many users — consumers who
-  # want tacet-browser system-wide can opt in with
+  # tacet-terminal binary + .desktop entry, and the XDG resolver so
+  # apps that ask for "the terminal" (Helix :term, file managers, IDEs)
+  # find it. tacet-browser ships alongside as the default contextless
+  # web surface; we intentionally don't set BROWSER, since a
+  # persistent-profile browser is a reasonable default for many users —
+  # consumers who want tacet-browser system-wide can opt in with
   # `environment.sessionVariables.BROWSER = "tacet-browser"`.
-  #
-  # TODO(terminal): tacet-terminal package + .desktop + xdg-terminals.list
-  # + TACET_TERMINAL session var are commented out until the crate
-  # lands on `dev` (see flake.nix). Without them, Super+Enter falls
-  # through to $TERMINAL / xdg-terminal-exec / foot/alacritty/kitty
-  # auto-discovery, which is fine for now.
   environment.systemPackages = [
-    # self.packages.${pkgs.system}.tacet-terminal
+    self.packages.${pkgs.system}.tacet-terminal
     self.packages.${pkgs.system}.tacet-browser
     pkgs.xdg-terminal-exec
   ];
 
-  # environment.etc."xdg/xdg-terminals.list".text = ''
-  #   tacet-terminal.desktop
-  # '';
-  # environment.sessionVariables.TACET_TERMINAL = lib.mkDefault "tacet-terminal";
+  # System-wide xdg-terminals.list — first entry wins. Per-user
+  # ~/.config/xdg-terminals.list can override if a user wants a
+  # different default in their tacet session.
+  environment.etc."xdg/xdg-terminals.list".text = ''
+    tacet-terminal.desktop
+  '';
+
+  # Compositor's Super+Enter resolution chain checks TACET_TERMINAL
+  # first; setting it here makes the binding deterministic regardless
+  # of $TERMINAL or xdg-terminal-exec discovery order.
+  environment.sessionVariables.TACET_TERMINAL = lib.mkDefault "tacet-terminal";
 }
