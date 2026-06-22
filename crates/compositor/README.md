@@ -21,5 +21,7 @@ targets a real session.
 - `TACET_AUTOSTART=cmd1:cmd2` — colon-separated commands to spawn after the
   Wayland socket is up. Empty by default.
 - `TACET_TERMINAL` — explicit terminal binary for the Super+T shortcut.
+- `TACET_NO_VULKAN=1` — skip Vulkan allocator in the x11 backend; fall back
+  to GBM. Useful when debugging driver issues.
 - `WAYLAND_DEBUG=1` — Smithay-side protocol tracing.
 - `RUST_LOG=debug` — tracing-subscriber filter.

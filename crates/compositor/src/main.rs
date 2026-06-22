@@ -1,10 +1,10 @@
 static POSSIBLE_BACKENDS: &[&str] = &[
     #[cfg(feature = "winit")]
-    "--winit : Run anvil as a X11 or Wayland client using winit.",
+    "--winit : Run as a X11 or Wayland client using winit (nested dev).",
     #[cfg(feature = "udev")]
-    "--tty-udev : Run anvil as a tty udev client (requires root if without logind).",
+    "--tty-udev : Run as a tty udev client (real session; requires root if without logind).",
     #[cfg(feature = "x11")]
-    "--x11 : Run anvil as an X11 client.",
+    "--x11 : Run as an X11 client.",
 ];
 
 #[cfg(feature = "profile-with-tracy-mem")]
