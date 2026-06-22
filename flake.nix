@@ -95,6 +95,14 @@
           # handles PTY + VT state machine; the binary opens a Wayland
           # surface via smithay-client-toolkit and renders the cell grid.
           # No tabs/splits/config-file/scrollback-search for alpha.1.
+          #
+          # TODO(terminal): crate body lives in a separate branch — the
+          # buildAndTestSubdir (`crates/apps/terminal`) does not exist on
+          # `dev` yet, so the package, the session-module systemPackages
+          # entry, and the xdg-terminals.list bit are commented out
+          # until the crate lands. Restore by uncommenting both this
+          # block and the matching section in nix/modules/tacet-session.nix.
+          /*
           tacet-terminal = pkgs.rustPlatform.buildRustPackage {
             pname = "tacet-terminal";
             version = "0.1.0-alpha.1";
@@ -129,6 +137,7 @@
               platforms = [ "x86_64-linux" "aarch64-linux" ];
             };
           };
+          */
 
           # tacet-browser — thin Rust wrapper around system Chromium that
           # exposes CDP and a contextless profile. Used both for rendering
