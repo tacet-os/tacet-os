@@ -1,6 +1,6 @@
 [package]
 name = "tacet-terminal"
-description = "Terminal for tacet-os (alpha.1 placeholder built on tacet-view)"
+description = "Native Wayland terminal for tacet-os (alacritty_terminal + winit + softbuffer + cosmic-text)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,11 +9,22 @@ authors.workspace = true
 rust-version.workspace = true
 publish = false
 
-# Alpha.1 placeholder. Opens a tacet-view (Chromium via --app=) pointed
-# at an inline HTML page. Real terminal will swap the inline data: URL
-# for a bundled packages/apps/terminal HTML entry that hosts
-# libghostty-wasm and connects to a rust-side PTY bridge.
-
+# Architecture: native Wayland terminal. The VT state machine + grid
+# live in-process as a Rust struct (`alacritty_terminal::Term`), which
+# is the structural reason for this rewrite — every other tacet-os
+# component (compositor, chat, agents) can read terminal state as
+# data without screen-scraping a web view. The window is a single
+# winit Wayland surface; pixels go through a CPU softbuffer; text
+# shaping + rasterization is cosmic-text + swash. PTY is portable-pty
+# (the wezterm crate) for parity with the rest of the wezterm/winit
+# Rust desktop ecosystem.
 [dependencies]
 anyhow = "1"
-tacet-view = { path = "../../libs/view" }
+alacritty_terminal = "0.26"
+cosmic-text = "0.14"
+log = "0.4"
+portable-pty = "0.9"
+softbuffer = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+winit = { version = "0.30", default-features = false, features = ["rwh_06", "wayland", "wayland-dlopen", "wayland-csd-adwaita", "x11"] }

@@ -1,41 +1,69 @@
 # tacet-terminal
 
-Terminal for tacet-os. Alpha.1 ships as a placeholder built on
-[`tacet-view`](../../libs/view) — it opens a contextless Chromium
-window via `--app=` mode pointed at an inline placeholder page.
+Native Wayland terminal for tacet-os. A single Rust binary that
+spawns `$SHELL` under a PTY and renders the grid in a winit window.
 
-## What this is today
+## Why native (vs Chromium/xterm.js)
 
-A few-hundred-LOC `tacet-view` consumer. Confirms the rest of the stack
-(Wayland surface, Chromium spawn, contextless profile, CDP) is wired
-correctly when you press Super+Enter or run `tacet-terminal`.
+tacet-os is agent-default. Every other component in the stack —
+compositor, chat surface, in-process agent — needs to read the
+terminal's contents as data, not as pixels or a DOM. Native
+`alacritty_terminal::Term` is a Rust struct in process memory:
+`term.grid()` is one method call away. A web-bridged terminal would
+have forced any consumer to either scrape pixels or open a WebSocket
+to talk to xterm.js inside the Chromium process, neither of which is
+acceptable for this project's read-as-data goal.
 
-## What this becomes
+## Stack
 
-The plan is for `packages/apps/terminal/` to ship an HTML+JS bundle
-hosting [libghostty-wasm](https://ghostty.org) for the VT state
-machine and an xterm-style cell renderer. The rust binary spawns
-a PTY, opens a local WebSocket, and points `tacet-view` at the
-bundled `index.html?ws=…`. PTY bytes flow PTY → rust → WS →
-libghostty-wasm → DOM canvas.
+- [`alacritty_terminal`](https://crates.io/crates/alacritty_terminal)
+  — VT parser + grid + cursor + scrollback.
+- [`winit`](https://crates.io/crates/winit) — Wayland window + event
+  loop. CSD via `wayland-csd-adwaita`.
+- [`softbuffer`](https://crates.io/crates/softbuffer) — CPU pixel
+  surface; no GPU/wgpu dependency for the MVP.
+- [`cosmic-text`](https://crates.io/crates/cosmic-text) — font
+  discovery, shaping, and (via `swash`) glyph rasterization, cached
+  per `CacheKey`.
+- [`portable-pty`](https://crates.io/crates/portable-pty) — `$SHELL`
+  spawn under a PTY (master/slave pair).
 
-The interface for the rust binary stays the same — `tacet-terminal`
-on `$PATH` — so the compositor's Super+Enter binding and the XDG
-default already in `nix/modules/tacet-session.nix` keep working
-without changes when the real UI lands.
+## Threads
 
-## Why Chromium-via-`tacet-view` rather than embedded webview
+- **main**: winit event loop. Owns the window, renderer, and Term
+  reference. Translates keyboard events to PTY bytes; on
+  `RedrawRequested` it locks Term and paints.
+- **pty-reader**: blocks on `pty.reader()`, feeds bytes into an
+  `ansi::Processor` that mutates Term through its `Handler` impl,
+  and sends `UserEvent::Redraw` to wake the main thread. On PTY EOF
+  it sends `UserEvent::ChildExited` so the window closes when the
+  shell exits.
 
-See [`crates/libs/view/src/lib.rs`](../../libs/view/src/lib.rs) for
-the long-form rationale. Short version: WebKitGTK can't speak CDP,
-CEF/Servo would dwarf the rest of tacet-os, and bundling Chromium
-duplicates ~200 MB per app. Wrapping the distro's `chromium` binary
-keeps each tacet app to a few hundred LOC and inherits security
-patches automatically.
+The Term itself sits behind `alacritty_terminal::sync::FairMutex` so
+the reader and renderer can't starve each other.
 
-## Override the UI bundle path
+## MVP scope
 
-The binary checks `$TACET_TERMINAL_UI` first; if set, it loads
-`file://$TACET_TERMINAL_UI` instead of the inline placeholder.
-The Nix wrapper uses this to point at the bundled HTML once it
-exists.
+In: ASCII + Latin-1 rendering, 16/256/truecolor fg+bg, block cursor,
+bold weight, resize → grid + PTY resize, keyboard input incl. ctrl,
+alt, arrows, F1–F12.
+
+Out (for now): mouse, selection, scrollback UI, IME, italic,
+underline, ligatures, bell, clipboard.
+
+## Wired into the session
+
+The compositor maps Super+Enter to `$TACET_TERMINAL`, which the
+session module sets to `tacet-terminal`. The Nix package wraps the
+binary with a default monospace font on `XDG_DATA_DIRS` so font
+discovery works even on minimal systems.
+
+## Verify
+
+```
+nix develop --command cargo check -p tacet-terminal
+nix develop --command cargo test  -p tacet-terminal
+nix develop --command cargo build -p tacet-terminal
+```
+
+Runs only inside a Wayland session (no nested-X fallback in MVP).

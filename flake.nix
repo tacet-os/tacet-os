@@ -16,9 +16,13 @@
         # Smithay (and wayland-backend) dlopen these at runtime. Cargo
         # doesn't bake an rpath into the binary, so they must be on
         # LD_LIBRARY_PATH (dev) or wrapped in (release).
+        #
+        # fontconfig is here for tacet-terminal (cosmic-text uses it
+        # for font discovery); it's harmless for the compositor.
         runtime = with pkgs; [
           seatd libdisplay-info libinput libxkbcommon
           wayland mesa libGL udev pixman libgbm
+          fontconfig
         ];
       };
     in
@@ -91,48 +95,64 @@
             passthru.providedSessions = [ "tacet" ];
           };
 
-          # tacet-terminal — alpha.1 placeholder built on tacet-view.
-          # Opens a contextless Chromium window pointed at an inline
-          # HTML page; later iterations swap the inline data: URL for
-          # a packaged bundle hosting libghostty-wasm + PTY bridge.
-          # Same shape as tacet-browser: pure rust build (no Wayland
-          # client libs needed because tacet-view shells out to system
-          # chromium), wrapped at install time so chromium is on PATH.
-          tacet-terminal = pkgs.rustPlatform.buildRustPackage {
-            pname = "tacet-terminal";
-            version = "0.1.0-alpha.1";
-            src = ./.;
-            cargoLock = {
-              lockFile = ./Cargo.lock;
-              outputHashes = {
-                "smithay-0.7.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
-                "smithay-drm-extras-0.1.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
+          # tacet-terminal — native Wayland terminal. Rust binary owns
+          # the window (winit + softbuffer), the VT state machine
+          # (alacritty_terminal), and the PTY. No web engine, no UI
+          # bundle — the rationale lives in crates/apps/terminal/README.md.
+          tacet-terminal =
+            let
+              # Runtime shared libs winit/softbuffer/cosmic-text dlopen.
+              # Wayland + xkbcommon are baseline; fontconfig is how
+              # cosmic-text discovers system fonts. JetBrains Mono is
+              # bundled so the binary works on minimal hosts that may
+              # not ship a monospace font in fontconfig's default path.
+              terminalRuntime = with pkgs; [
+                wayland libxkbcommon fontconfig libGL
+              ];
+              terminalFonts = with pkgs; [
+                jetbrains-mono dejavu_fonts
+              ];
+            in
+            pkgs.rustPlatform.buildRustPackage {
+              pname = "tacet-terminal";
+              version = "0.1.0-alpha.1";
+              src = ./.;
+              cargoLock = {
+                lockFile = ./Cargo.lock;
+                outputHashes = {
+                  "smithay-0.7.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
+                  "smithay-drm-extras-0.1.0" = "sha256-hclOFFKWY2hjVEQrE/whFuppf72JuwNoV2UwBk/pAh4=";
+                };
+              };
+              buildAndTestSubdir = "crates/apps/terminal";
+              nativeBuildInputs = with pkgs; [ pkg-config makeWrapper ];
+              buildInputs = terminalRuntime;
+              postInstall = ''
+                # Make the dlopen'd libs and the bundled fonts visible
+                # at runtime. XDG_DATA_DIRS feeds fontconfig so the
+                # font search picks up our JetBrains Mono / DejaVu
+                # even on hosts where the user's environment is bare.
+                wrapProgram $out/bin/tacet-terminal \
+                  --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath terminalRuntime} \
+                  --suffix XDG_DATA_DIRS : ${pkgs.lib.makeSearchPathOutput "out" "share" terminalFonts}
+
+                mkdir -p $out/share/applications
+                cat > $out/share/applications/tacet-terminal.desktop <<EOF
+                [Desktop Entry]
+                Name=tacet-terminal
+                Comment=Terminal for tacet-os
+                Exec=$out/bin/tacet-terminal
+                Type=Application
+                Categories=System;TerminalEmulator;
+                EOF
+              '';
+              meta = with pkgs.lib; {
+                description = "Native Wayland terminal for tacet-os (alacritty_terminal + winit + softbuffer + cosmic-text)";
+                license = licenses.mit;
+                mainProgram = "tacet-terminal";
+                platforms = [ "x86_64-linux" "aarch64-linux" ];
               };
             };
-            buildAndTestSubdir = "crates/apps/terminal";
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-            postInstall = ''
-              wrapProgram $out/bin/tacet-terminal \
-                --prefix PATH : ${pkgs.chromium}/bin \
-                --set-default TACET_BROWSER_BIN chromium
-
-              mkdir -p $out/share/applications
-              cat > $out/share/applications/tacet-terminal.desktop <<EOF
-              [Desktop Entry]
-              Name=tacet-terminal
-              Comment=Terminal for tacet-os
-              Exec=$out/bin/tacet-terminal
-              Type=Application
-              Categories=System;TerminalEmulator;
-              EOF
-            '';
-            meta = with pkgs.lib; {
-              description = "Terminal for tacet-os (alpha.1: tacet-view placeholder)";
-              license = licenses.mit;
-              mainProgram = "tacet-terminal";
-              platforms = [ "x86_64-linux" "aarch64-linux" ];
-            };
-          };
 
           # tacet-browser — thin Rust wrapper around system Chromium that
           # exposes CDP and a contextless profile. Used both for rendering
