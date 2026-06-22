@@ -4,7 +4,7 @@
   "private": true,
   "description": "tacet-os monorepo root — TS workspace for launcher and future UI surfaces",
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/apps/*", "packages/libs/*"],
   "packageManager": "bun@1.1.0",
   "scripts": {
     "moon": "moon",

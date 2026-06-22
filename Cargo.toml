@@ -1,6 +1,10 @@
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+# apps/* = installable binaries (tacet-compositor, tacet-terminal, ...)
+# libs/* slot reserved; add "crates/libs/*" to members when the first
+# internal Rust library lands (cargo errors on empty globs, so we keep
+# the pattern out until there's a Cargo.toml to match).
+members = ["crates/apps/*"]
 
 [workspace.package]
 version = "0.1.0-alpha.1"

@@ -10,11 +10,15 @@ A quiet, agent-native Wayland desktop. Polyglot monorepo: rust compositor, ts la
 
 | Path | What | Language |
 | --- | --- | --- |
-| `crates/compositor/` | `tacet-compositor` — smithay-based Wayland compositor | Rust |
-| `packages/launcher/` | `tacet-launcher` — app launcher surface (stub) | TypeScript |
+| `crates/apps/compositor/` | `tacet-compositor` — smithay-based Wayland compositor | Rust |
+| `crates/libs/` | shared Rust libraries (empty for alpha.1) | Rust |
+| `packages/apps/launcher/` | `tacet-launcher` — app launcher surface (stub) | TypeScript |
+| `packages/libs/` | shared TS code (empty for alpha.1) | TypeScript |
 | `nix/modules/` | NixOS module — adds tacet as a selectable session | Nix |
 | `flake.nix` | The assembly: packages, module, devShell, checks | Nix |
 | `moon.yml` + `.moon/` | Polyglot task orchestration | moonrepo |
+
+**Rule of thumb:** `apps/*` = things users install or run; `libs/*` = internal building blocks other code depends on. The directory tells you the role without opening the manifest.
 
 ## Install (NixOS, flake user)
 

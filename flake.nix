@@ -52,7 +52,7 @@
               };
             };
 
-            buildAndTestSubdir = "crates/compositor";
+            buildAndTestSubdir = "crates/apps/compositor";
 
             nativeBuildInputs = deps.native ++ [ pkgs.makeWrapper ];
             buildInputs = deps.runtime;

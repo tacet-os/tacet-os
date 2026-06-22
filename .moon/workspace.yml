@@ -2,8 +2,10 @@
 $schema: 'https://moonrepo.dev/schemas/workspace.json'
 
 projects:
-  - 'crates/*'
-  - 'packages/*'
+  - 'crates/apps/*'
+  - 'crates/libs/*'
+  - 'packages/apps/*'
+  - 'packages/libs/*'
 
 vcs:
   manager: 'git'
