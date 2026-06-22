@@ -94,13 +94,26 @@
           default = self.packages.${system}.tacet-compositor;
         });
 
-      # Importable NixOS module — adds tacet as a selectable session
-      # in the greeter alongside whatever else is configured. Does NOT
-      # disable or replace COSMIC/GNOME/sway/etc.
+      # Importable NixOS modules.
       #
       #   inputs.tacet-os.url = "github:tacet-os/tacet-os";
       #   imports = [ inputs.tacet-os.nixosModules.default ];
-      nixosModules.default = import ./nix/modules/tacet-session.nix self;
+      #
+      # - `default` — base defaults + tacet session. The everyday choice.
+      # - `base`    — Wayland defaults only (rtkit, dbus, xwayland, seatd,
+      #               NIXOS_OZONE_WL). Useful if you don't want tacet as
+      #               a session but want the surrounding system hygiene.
+      # - `session` — just the session entry. Pair with your own base.
+      nixosModules = {
+        base = import ./nix/modules/base.nix;
+        session = import ./nix/modules/tacet-session.nix self;
+        default = { ... }: {
+          imports = [
+            self.nixosModules.base
+            self.nixosModules.session
+          ];
+        };
+      };
 
       devShells = forAllSystems (system:
         let
